@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -32,7 +31,6 @@ small{color:#64756b}
 <h1>Mijn Quran</h1>
 <p>Jouw gezamenlijke Quran-bibliotheek</p>
 </header>
-
 <main>
 <div id="status">Verbinding maken met Firebase...</div>
 
@@ -55,7 +53,7 @@ small{color:#64756b}
 <input id="playlistName" placeholder="Bijv. Voor het slapen" maxlength="100" required>
 <button type="submit">Afspeellijst maken</button>
 </form>
-<label for="playlistFilter">Bibliotheek bekijken</label>
+<label for="playlistFilter">Bekijk bibliotheek of afspeellijst</label>
 <select id="playlistFilter">
 <option value="all">Alle recitaties</option>
 <option value="favorites">Mijn favorieten</option>
@@ -72,12 +70,8 @@ small{color:#64756b}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
-import {
-  getDatabase, ref, onValue, set
-} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
-import {
-  getAuth, signInAnonymously
-} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDBBQGVUYM9uAciARTKb8iGbNKfPhzngVc",
@@ -110,19 +104,25 @@ function makeId() {
 
 function getLocalData() {
   try {
-    const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+    const data = JSON.parse(
+      localStorage.getItem(STORAGE_KEY) || "{}"
+    );
+
     return {
       tracks: Array.isArray(data.tracks) ? data.tracks : [],
       playlists: Array.isArray(data.playlists) ? data.playlists : []
     };
   } catch {
-    return {tracks: [], playlists: []};
+    return { tracks: [], playlists: [] };
   }
 }
 
 function saveLocalBackup() {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({tracks, playlists}));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      tracks,
+      playlists
+    }));
   } catch {}
 }
 
@@ -130,39 +130,13 @@ function createButton(label, className, action) {
   const button = document.createElement("button");
   button.type = "button";
   button.textContent = label;
-  if (className) button.className = className;
+
+  if (className) {
+    button.className = className;
+  }
+
   button.addEventListener("click", action);
   return button;
-}
-
-/* Maak Firebase-lijsten bruikbaar, ook als ze als object zijn opgeslagen. */
-function toList(value) {
-  if (Array.isArray(value)) return value.filter(Boolean);
-  if (value && typeof value === "object") {
-    return Object.values(value).filter(Boolean);
-  }
-  return [];
-}
-
-function normalizeTracks(value) {
-  return toList(value).map(track => ({
-    ...track,
-    id: String(track.id || makeId()),
-    name: String(track.name || "Naamloze recitatie"),
-    url: String(track.url || ""),
-    favorite: Boolean(track.favorite)
-  }));
-}
-
-function normalizePlaylists(value) {
-  return toList(value).map(playlist => ({
-    ...playlist,
-    id: String(playlist.id || makeId()),
-    name: String(playlist.name || "Naamloze afspeellijst"),
-    trackIds: Array.isArray(playlist.trackIds)
-      ? playlist.trackIds
-      : []
-  }));
 }
 
 async function saveData() {
@@ -171,18 +145,55 @@ async function saveData() {
     return false;
   }
 
-  const data = {tracks, playlists};
+  const data = { tracks, playlists };
 
   try {
     await set(libraryRef, data);
     lastRemoteJson = JSON.stringify(data);
     saveLocalBackup();
-    status("Online opgeslagen: " + tracks.length +
-      " recitaties en " + playlists.length + " afspeellijsten.");
+
+    status(
+      "Online opgeslagen: " + tracks.length +
+      " recitaties en " + playlists.length +
+      " afspeellijsten."
+    );
+
     return true;
   } catch (error) {
     status("Opslaan mislukt: " + error.message);
     return false;
+  }
+}
+
+/* Nieuwe functie: een bestaande recitatie hernoemen. */
+async function renameTrack(track) {
+  const newName = prompt(
+    "Nieuwe naam voor de recitatie:",
+    track.name || ""
+  );
+
+  if (newName === null) return;
+
+  const trimmedName = newName.trim();
+
+  if (!trimmedName) {
+    alert("De naam mag niet leeg zijn.");
+    return;
+  }
+
+  if (trimmedName.length > 150) {
+    alert("De naam mag maximaal 150 tekens bevatten.");
+    return;
+  }
+
+  const oldName = track.name;
+  track.name = trimmedName;
+
+  if (await saveData()) {
+    render();
+  } else {
+    track.name = oldName;
+    render();
   }
 }
 
@@ -191,6 +202,10 @@ function renderPlaylistButtons() {
   container.replaceChildren();
 
   playlists.forEach(playlist => {
+    if (!Array.isArray(playlist.trackIds)) {
+      playlist.trackIds = [];
+    }
+
     const row = document.createElement("div");
 
     row.appendChild(createButton(
@@ -206,13 +221,21 @@ function renderPlaylistButtons() {
       "Verwijder afspeellijst",
       "danger",
       async () => {
-        if (!confirm("Deze afspeellijst voor iedereen verwijderen?")) return;
+        if (!confirm(
+          "Deze afspeellijst voor iedereen verwijderen?"
+        )) return;
 
-        playlists = playlists.filter(p => p.id !== playlist.id);
+        playlists = playlists.filter(
+          p => p.id !== playlist.id
+        );
 
-        if (activePlaylist === playlist.id) activePlaylist = "all";
+        if (activePlaylist === playlist.id) {
+          activePlaylist = "all";
+        }
 
-        if (await saveData()) render();
+        if (await saveData()) {
+          render();
+        }
       }
     ));
 
@@ -239,7 +262,9 @@ function render() {
     }
 
     if (activePlaylist !== "all") {
-      const playlist = playlists.find(p => p.id === activePlaylist);
+      const playlist = playlists.find(
+        p => p.id === activePlaylist
+      );
 
       if (playlist) {
         shown = shown.filter(track =>
@@ -262,21 +287,29 @@ function render() {
       item.className = "track";
 
       const title = document.createElement("strong");
-      title.textContent = track.name;
+      title.textContent = track.name || "Naamloze recitatie";
       item.appendChild(title);
+
+      /* Nieuwe knop voor het wijzigen van de naam. */
+      item.appendChild(createButton(
+        "✏️ Naam wijzigen",
+        "secondary",
+        () => renameTrack(track)
+      ));
 
       const audio = document.createElement("audio");
       audio.controls = true;
       audio.preload = "none";
-
-      if (track.url) audio.src = track.url;
+      audio.src = track.url || "";
       item.appendChild(audio);
 
       const error = document.createElement("small");
+
       audio.addEventListener("error", () => {
         error.textContent =
           "Audio kon niet worden geladen. Controleer de link.";
       });
+
       item.appendChild(error);
 
       item.appendChild(createButton(
@@ -284,7 +317,10 @@ function render() {
         "secondary",
         async () => {
           track.favorite = !track.favorite;
-          if (await saveData()) render();
+
+          if (await saveData()) {
+            render();
+          }
         }
       ));
 
@@ -310,7 +346,9 @@ function render() {
           "Toevoegen aan afspeellijst",
           "secondary",
           async () => {
-            const playlist = playlists.find(p => p.id === selector.value);
+            const playlist = playlists.find(
+              p => p.id === selector.value
+            );
 
             if (!playlist) {
               alert("Kies eerst een afspeellijst.");
@@ -323,7 +361,10 @@ function render() {
             }
 
             playlist.trackIds.push(track.id);
-            if (await saveData()) render();
+
+            if (await saveData()) {
+              render();
+            }
           }
         ));
       }
@@ -332,7 +373,9 @@ function render() {
         "Verwijderen",
         "danger",
         async () => {
-          if (!confirm("Deze recitatie voor iedereen verwijderen?")) return;
+          if (!confirm(
+            "Deze recitatie voor iedereen verwijderen?"
+          )) return;
 
           tracks = tracks.filter(t => t.id !== track.id);
 
@@ -342,7 +385,9 @@ function render() {
             );
           });
 
-          if (await saveData()) render();
+          if (await saveData()) {
+            render();
+          }
         }
       ));
 
@@ -359,7 +404,6 @@ async function startApp() {
     const auth = getAuth(app);
 
     status("Aanmelden bij Firebase...");
-
     await signInAnonymously(auth);
 
     const database = getDatabase(app);
@@ -372,25 +416,37 @@ async function startApp() {
         if (remote === null) {
           if (!ready) {
             const local = getLocalData();
-            tracks = normalizeTracks(local.tracks);
-            playlists = normalizePlaylists(local.playlists);
+            tracks = local.tracks;
+            playlists = local.playlists;
             ready = true;
 
             if (tracks.length || playlists.length) {
               await saveData();
             } else {
-              status("Verbonden met Firebase. Voeg de eerste recitatie toe.");
+              status(
+                "Verbonden met Firebase. Voeg de eerste recitatie toe."
+              );
             }
 
             render();
           }
+
           return;
         }
 
         const data = {
-          tracks: normalizeTracks(remote.tracks),
-          playlists: normalizePlaylists(remote.playlists)
+          tracks: Array.isArray(remote.tracks) ? remote.tracks : [],
+          playlists: Array.isArray(remote.playlists)
+            ? remote.playlists
+            : []
         };
+
+        data.playlists = data.playlists.map(playlist => ({
+          ...playlist,
+          trackIds: Array.isArray(playlist.trackIds)
+            ? playlist.trackIds
+            : []
+        }));
 
         const json = JSON.stringify(data);
 
@@ -403,17 +459,21 @@ async function startApp() {
 
         ready = true;
 
-        status("Gesynchroniseerd: " + tracks.length +
-          " recitaties en " + playlists.length + " afspeellijsten.");
+        status(
+          "Gesynchroniseerd: " + tracks.length +
+          " recitaties en " + playlists.length +
+          " afspeellijsten."
+        );
 
         render();
       } catch (error) {
-        status("Fout bij het verwerken van Firebase: " + error.message);
+        status(
+          "Fout bij het verwerken van Firebase: " + error.message
+        );
       }
     }, error => {
       status("Database lezen mislukt: " + error.message);
     });
-
   } catch (error) {
     status("Verbinding mislukt: " + error.message);
   }
@@ -432,7 +492,10 @@ $("addForm").addEventListener("submit", async event => {
 
   try {
     const parsed = new URL(url);
-    if (!["http:", "https:"].includes(parsed.protocol)) throw new Error();
+
+    if (!["http:", "https:"].includes(parsed.protocol)) {
+      throw new Error();
+    }
   } catch {
     alert("Vul een geldige http- of https-audiolink in.");
     return;
