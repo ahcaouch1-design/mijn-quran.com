@@ -6,254 +6,132 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mijn Quran</title>
 <style>
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  background: #f4f5ef;
-  color: #193b30;
-  font-family: Arial, sans-serif;
-}
-
-header {
-  background: #173d31;
-  color: white;
-  padding: 28px 16px;
-  text-align: center;
-}
-
-header h1 { margin: 0 0 8px; }
-header p { margin-bottom: 0; }
-
-main {
-  max-width: 650px;
-  margin: auto;
-  padding: 16px;
-}
-
-.card {
-  background: white;
-  padding: 18px;
-  border-radius: 14px;
-  margin-bottom: 16px;
-  box-shadow: 0 2px 8px #0000000b;
-}
-
-h2 { font-size: 20px; margin-top: 0; }
-
-label {
-  display: block;
-  margin-top: 10px;
-  font-size: 14px;
-}
-
-input, select, button {
-  width: 100%;
-  padding: 12px;
-  margin: 6px 0;
-  border-radius: 8px;
-  font-size: 15px;
-}
-
-input, select {
-  border: 1px solid #cbd5cc;
-  background: white;
-  color: #193b30;
-}
-
-button {
-  border: none;
-  background: #245b47;
-  color: white;
-  cursor: pointer;
-}
-
-button.secondary {
-  background: #e8eee8;
-  color: #193b30;
-}
-
-button.danger {
-  background: #f8e8e5;
-  color: #8a3027;
-}
-
-.track {
-  padding: 14px 0;
-  border-bottom: 1px solid #e5e9e4;
-  overflow-wrap: anywhere;
-}
-
-.track:last-child { border-bottom: none; }
-
-.track strong {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 16px;
-}
-
-audio {
-  width: 100%;
-  margin: 8px 0;
-}
-
-small { color: #64756b; }
-
-#status {
-  padding: 10px;
-  border-radius: 8px;
-  background: #e8eee8;
-  margin-bottom: 12px;
-  font-size: 13px;
-  overflow-wrap: anywhere;
-}
-
-.hidden { display: none; }
+*{box-sizing:border-box}
+body{margin:0;background:#f4f5ef;color:#193b30;font-family:Arial,sans-serif}
+header{background:#173d31;color:white;padding:28px 16px;text-align:center}
+header h1{margin:0 0 8px}
+header p{margin-bottom:0}
+main{max-width:650px;margin:auto;padding:16px}
+.card{background:white;padding:18px;border-radius:14px;margin-bottom:16px;box-shadow:0 2px 8px #0000000b}
+h2{font-size:20px;margin-top:0}
+label{display:block;margin-top:10px;font-size:14px}
+input,select,button{width:100%;padding:12px;margin:6px 0;border-radius:8px;font-size:15px}
+input,select{border:1px solid #cbd5cc;background:white;color:#193b30}
+button{border:none;background:#245b47;color:white;cursor:pointer}
+button.secondary{background:#e8eee8;color:#193b30}
+button.danger{background:#f8e8e5;color:#8a3027}
+.track{padding:14px 0;border-bottom:1px solid #e5e9e4;overflow-wrap:anywhere}
+.track:last-child{border-bottom:none}
+.track strong{display:block;margin-bottom:8px;font-size:16px}
+audio{width:100%;margin:8px 0}
+small{color:#64756b}
+#status{padding:10px;border-radius:8px;background:#e8eee8;margin-bottom:12px;font-size:13px;overflow-wrap:anywhere}
 </style>
 </head>
-
 <body>
-
 <header>
-  <h1>مكتبتي القرآنية</h1>
-  <h1>Mijn Quran</h1>
-  <p>Jouw persoonlijke Quran-bibliotheek</p>
+<h1>مكتبتي القرآنية</h1>
+<h1>Mijn Quran</h1>
+<p>Jouw gezamenlijke Quran-bibliotheek</p>
 </header>
 
 <main>
+<div id="status" role="status">Verbinding maken...</div>
 
-  <div id="status" role="status">
-    Je bibliotheek wordt geladen...
-  </div>
+<section class="card">
+<h2>＋ Recitatie toevoegen</h2>
+<form id="addForm">
+<label for="trackName">Naam van de recitatie</label>
+<input id="trackName" placeholder="Bijv. Ahmed Talib Hameed — Al-Baqarah" required maxlength="150">
+<label for="trackUrl">Directe audiolink</label>
+<input id="trackUrl" type="url" placeholder="https://voorbeeld.nl/recitatie.mp3" required>
+<button type="submit">Recitatie opslaan</button>
+</form>
+<small>Gebruik een directe link naar een audiobestand. Een gewone YouTube-link werkt niet.</small>
+</section>
 
-  <section class="card">
-    <h2>＋ Recitatie toevoegen</h2>
+<section class="card">
+<h2>♡ Mijn afspeellijsten</h2>
+<form id="playlistForm">
+<label for="playlistName">Nieuwe afspeellijst</label>
+<input id="playlistName" placeholder="Bijv. Voor het slapen" maxlength="100" required>
+<button type="submit">Afspeellijst maken</button>
+</form>
+<label for="playlistFilter">Bekijk bibliotheek of afspeellijst</label>
+<select id="playlistFilter">
+<option value="all">Alle recitaties</option>
+<option value="favorites">Mijn favorieten</option>
+</select>
+<div id="playlistButtons"></div>
+</section>
 
-    <form id="addForm">
-      <label for="trackName">Naam van de recitatie</label>
-      <input id="trackName"
-        placeholder="Bijv. Ahmed Talib Hameed — Al-Baqarah"
-        required maxlength="150">
-
-      <label for="trackUrl">Directe audiolink</label>
-      <input id="trackUrl" type="url"
-        placeholder="https://voorbeeld.nl/recitatie.mp3"
-        required>
-
-      <button type="submit">Recitatie opslaan</button>
-    </form>
-
-    <small>
-      Gebruik een directe link naar een afspeelbaar audiobestand.
-      Een gewone YouTube-link werkt hier niet.
-    </small>
-  </section>
-
-  <section class="card">
-    <h2>♡ Mijn afspeellijsten</h2>
-
-    <form id="playlistForm">
-      <label for="playlistName">Nieuwe afspeellijst</label>
-      <input id="playlistName"
-        placeholder="Bijv. Voor het slapen"
-        maxlength="100" required>
-      <button type="submit">Afspeellijst maken</button>
-    </form>
-
-    <label for="playlistFilter">Bekijk bibliotheek of afspeellijst</label>
-    <select id="playlistFilter">
-      <option value="all">Alle recitaties</option>
-      <option value="favorites">Mijn favorieten</option>
-    </select>
-
-    <div id="playlistButtons"></div>
-  </section>
-
-  <section class="card">
-    <h2>Mijn bibliotheek</h2>
-    <input id="search" placeholder="Zoek op naam...">
-    <div id="tracks"></div>
-  </section>
-
+<section class="card">
+<h2>Mijn bibliotheek</h2>
+<input id="search" placeholder="Zoek op naam...">
+<div id="tracks"></div>
+</section>
 </main>
 
-<script>
-"use strict";
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+import {
+  getDatabase, ref, onValue, set
+} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
 
-const STORAGE_KEY = "mijn-quran-library-v2";
+/* VERVANG DEZE VELDEN MET JE EIGEN FIREBASE-CONFIGURATIE */
+const firebaseConfig = {
+  apiKey: "VUL_HIER_APIKEY_IN",
+  authDomain: "VUL_HIER_AUTHDOMAIN_IN",
+  databaseURL: "https://quran-com-1a906-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "quran-com-1a906",
+  storageBucket: "VUL_HIER_STORAGEBUCKET_IN",
+  messagingSenderId: "VUL_HIER_MESSAGINGSENDERID_IN",
+  appId: "VUL_HIER_APPID_IN"
+};
 
+const $ = id => document.getElementById(id);
 let tracks = [];
 let playlists = [];
 let activePlaylist = "all";
-let storageAvailable = true;
-
-const $ = id => document.getElementById(id);
+let ready = false;
+let lastRemoteJson = "";
+const STORAGE_KEY = "mijn-quran-library-v2";
 
 function setStatus(message) {
   $("status").textContent = message;
 }
 
-function loadData() {
+function makeId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2,9);
+}
+
+function getLocalData() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-
-    if (raw) {
-      const data = JSON.parse(raw);
-
-      tracks = Array.isArray(data.tracks) ? data.tracks : [];
-      playlists = Array.isArray(data.playlists)
-        ? data.playlists : [];
-    }
-
-    storageAvailable = true;
-  } catch (error) {
-    storageAvailable = false;
-    tracks = [];
-    playlists = [];
-    setStatus(
-      "Opslag kon niet worden gelezen. Je gegevens zijn mogelijk " +
-      "niet beschikbaar in deze browsercontext. " + error.message
-    );
+    if (!raw) return {tracks: [], playlists: []};
+    const data = JSON.parse(raw);
+    return {
+      tracks: Array.isArray(data.tracks) ? data.tracks : [],
+      playlists: Array.isArray(data.playlists) ? data.playlists : []
+    };
+  } catch {
+    return {tracks: [], playlists: []};
   }
 }
 
-function saveData() {
+function saveLocalBackup() {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      tracks,
-      playlists
-    }));
-
-    storageAvailable = true;
-    setStatus(
-      "Opgeslagen. Je bibliotheek bevat " +
-      tracks.length + " recitaties en " +
-      playlists.length + " afspeellijsten."
-    );
-
-    return true;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({tracks, playlists}));
   } catch (error) {
-    storageAvailable = false;
-    setStatus(
-      "Opslaan is mislukt. Maak eerst een back-up van je gegevens. " +
-      "Fout: " + error.message
-    );
-    return false;
+    console.warn("Lokale reservekopie niet gelukt", error);
   }
-}
-
-function makeId() {
-  return Date.now().toString(36) +
-    Math.random().toString(36).slice(2, 9);
 }
 
 function createButton(label, className, action) {
   const button = document.createElement("button");
   button.type = "button";
   button.textContent = label;
-
   if (className) button.className = className;
-
   button.addEventListener("click", action);
   return button;
 }
@@ -266,8 +144,7 @@ function renderPlaylistButtons() {
     const row = document.createElement("div");
 
     row.appendChild(createButton(
-      "♫ " + playlist.name +
-      " (" + playlist.trackIds.length + ")",
+      "♫ " + playlist.name + " (" + playlist.trackIds.length + ")",
       "secondary",
       () => {
         activePlaylist = playlist.id;
@@ -278,18 +155,11 @@ function renderPlaylistButtons() {
     row.appendChild(createButton(
       "Verwijder afspeellijst",
       "danger",
-      () => {
-        if (!confirm(
-          "Deze afspeellijst verwijderen? De recitaties blijven bewaard."
-        )) return;
-
+      async () => {
+        if (!confirm("Deze afspeellijst verwijderen? De recitaties blijven bewaard.")) return;
         playlists = playlists.filter(p => p.id !== playlist.id);
-
-        if (activePlaylist === playlist.id) {
-          activePlaylist = "all";
-        }
-
-        saveData();
+        if (activePlaylist === playlist.id) activePlaylist = "all";
+        await saveData();
         render();
       }
     ));
@@ -308,7 +178,7 @@ function render() {
   const filter = $("playlistFilter").value;
 
   let shown = tracks.filter(track =>
-    track.name.toLowerCase().includes(query)
+    String(track.name || "").toLowerCase().includes(query)
   );
 
   if (filter === "favorites") {
@@ -317,19 +187,15 @@ function render() {
 
   if (activePlaylist !== "all") {
     const playlist = playlists.find(p => p.id === activePlaylist);
-
     if (playlist) {
-      shown = shown.filter(track =>
-        playlist.trackIds.includes(track.id)
-      );
+      shown = shown.filter(track => playlist.trackIds.includes(track.id));
     } else {
       activePlaylist = "all";
     }
   }
 
   if (shown.length === 0) {
-    container.textContent =
-      "Geen recitaties gevonden. Voeg hierboven een recitatie toe.";
+    container.textContent = "Geen recitaties gevonden. Voeg hierboven een recitatie toe.";
     return;
   }
 
@@ -348,10 +214,7 @@ function render() {
 
     audio.addEventListener("error", () => {
       const message = item.querySelector(".audioError");
-      if (message) {
-        message.textContent =
-          "Audio kon niet worden geladen. Controleer de link.";
-      }
+      if (message) message.textContent = "Audio kon niet worden geladen. Controleer de link.";
     });
 
     item.appendChild(audio);
@@ -363,9 +226,9 @@ function render() {
     item.appendChild(createButton(
       track.favorite ? "♥ Favoriet" : "♡ Favoriet",
       "secondary",
-      () => {
+      async () => {
         track.favorite = !track.favorite;
-        saveData();
+        await saveData();
         render();
       }
     ));
@@ -391,11 +254,8 @@ function render() {
       item.appendChild(createButton(
         "Toevoegen aan afspeellijst",
         "secondary",
-        () => {
-          const playlist = playlists.find(
-            p => p.id === selector.value
-          );
-
+        async () => {
+          const playlist = playlists.find(p => p.id === selector.value);
           if (!playlist) {
             alert("Kies eerst een afspeellijst.");
             return;
@@ -403,7 +263,7 @@ function render() {
 
           if (!playlist.trackIds.includes(track.id)) {
             playlist.trackIds.push(track.id);
-            saveData();
+            await saveData();
             render();
           } else {
             alert("Deze recitatie staat al in de afspeellijst.");
@@ -415,18 +275,16 @@ function render() {
     item.appendChild(createButton(
       "Verwijderen",
       "danger",
-      () => {
-        if (!confirm("Deze recitatie verwijderen?")) return;
+      async () => {
+        if (!confirm("Deze recitatie verwijderen voor iedereen?")) return;
 
         tracks = tracks.filter(t => t.id !== track.id);
 
         playlists.forEach(playlist => {
-          playlist.trackIds = playlist.trackIds.filter(
-            id => id !== track.id
-          );
+          playlist.trackIds = playlist.trackIds.filter(id => id !== track.id);
         });
 
-        saveData();
+        await saveData();
         render();
       }
     ));
@@ -435,14 +293,82 @@ function render() {
   });
 }
 
-$("addForm").addEventListener("submit", event => {
+let libraryRef;
+
+async function saveData() {
+  if (!ready || !libraryRef) {
+    setStatus("De database is nog niet verbonden. Er is niets online opgeslagen.");
+    return false;
+  }
+
+  const data = {tracks, playlists};
+
+  try {
+    await set(libraryRef, data);
+    saveLocalBackup();
+    setStatus(
+      "Online opgeslagen: " + tracks.length +
+      " recitaties en " + playlists.length + " afspeellijsten."
+    );
+    return true;
+  } catch (error) {
+    setStatus("Online opslaan mislukt: " + error.message + ". Controleer de Firebase-regels.");
+    return false;
+  }
+}
+
+try {
+  if (Object.values(firebaseConfig).some(value =>
+    String(value).startsWith("VUL_HIER_")
+  )) {
+    throw new Error("Vul eerst de Firebase-configuratie in.");
+  }
+
+  const app = initializeApp(firebaseConfig);
+  const database = getDatabase(app);
+  libraryRef = ref(database, "library");
+
+  onValue(libraryRef, async snapshot => {
+    const remote = snapshot.val();
+
+    if (remote && Array.isArray(remote.tracks) && Array.isArray(remote.playlists)) {
+      tracks = remote.tracks;
+      playlists = remote.playlists;
+      ready = true;
+
+      setStatus(
+        "Verbonden en gesynchroniseerd: " + tracks.length +
+        " recitaties en " + playlists.length + " afspeellijsten."
+      );
+      saveLocalBackup();
+      render();
+    } else if (!ready) {
+      const local = getLocalData();
+      tracks = local.tracks;
+      playlists = local.playlists;
+      ready = true;
+
+      if (tracks.length || playlists.length) {
+        await saveData();
+      } else {
+        setStatus("Verbonden met Firebase. Voeg de eerste recitatie toe.");
+      }
+      render();
+    }
+  }, error => {
+    setStatus("Firebase kan niet worden gelezen: " + error.message);
+  });
+} catch (error) {
+  setStatus("Firebase-configuratie ontbreekt of is onjuist: " + error.message);
+}
+
+$("addForm").addEventListener("submit", async event => {
   event.preventDefault();
 
   const name = $("trackName").value.trim();
   const url = $("trackUrl").value.trim();
 
   let parsed;
-
   try {
     parsed = new URL(url);
   } catch {
@@ -455,6 +381,11 @@ $("addForm").addEventListener("submit", event => {
     return;
   }
 
+  if (!ready) {
+    alert("De database is nog niet verbonden. Probeer het zo opnieuw.");
+    return;
+  }
+
   tracks.unshift({
     id: makeId(),
     name,
@@ -462,21 +393,21 @@ $("addForm").addEventListener("submit", event => {
     favorite: false
   });
 
-  if (!saveData()) {
-    tracks.shift();
-    return;
+  if (await saveData()) {
+    $("addForm").reset();
+    render();
   }
-
-  $("addForm").reset();
-  render();
 });
 
-$("playlistForm").addEventListener("submit", event => {
+$("playlistForm").addEventListener("submit", async event => {
   event.preventDefault();
 
   const name = $("playlistName").value.trim();
 
-  if (!name) return;
+  if (!name || !ready) {
+    if (!ready) alert("De database is nog niet verbonden.");
+    return;
+  }
 
   playlists.push({
     id: makeId(),
@@ -484,27 +415,14 @@ $("playlistForm").addEventListener("submit", event => {
     trackIds: []
   });
 
-  if (!saveData()) {
-    playlists.pop();
-    return;
+  if (await saveData()) {
+    $("playlistForm").reset();
+    render();
   }
-
-  $("playlistForm").reset();
-  render();
 });
 
 $("search").addEventListener("input", render);
 $("playlistFilter").addEventListener("change", render);
-
-loadData();
-render();
-
-if (storageAvailable) {
-  setStatus(
-    "Bibliotheek geladen. " + tracks.length +
-    " recitaties en " + playlists.length + " afspeellijsten."
-  );
-}
 </script>
 </body>
 </html>
