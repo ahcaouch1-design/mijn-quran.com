@@ -135,6 +135,36 @@ function createButton(label, className, action) {
   return button;
 }
 
+/* Maak Firebase-lijsten bruikbaar, ook als ze als object zijn opgeslagen. */
+function toList(value) {
+  if (Array.isArray(value)) return value.filter(Boolean);
+  if (value && typeof value === "object") {
+    return Object.values(value).filter(Boolean);
+  }
+  return [];
+}
+
+function normalizeTracks(value) {
+  return toList(value).map(track => ({
+    ...track,
+    id: String(track.id || makeId()),
+    name: String(track.name || "Naamloze recitatie"),
+    url: String(track.url || ""),
+    favorite: Boolean(track.favorite)
+  }));
+}
+
+function normalizePlaylists(value) {
+  return toList(value).map(playlist => ({
+    ...playlist,
+    id: String(playlist.id || makeId()),
+    name: String(playlist.name || "Naamloze afspeellijst"),
+    trackIds: Array.isArray(playlist.trackIds)
+      ? playlist.trackIds
+      : []
+  }));
+}
+
 async function saveData() {
   if (!ready || !libraryRef) {
     status("De database is nog niet verbonden.");
@@ -191,128 +221,136 @@ function renderPlaylistButtons() {
 }
 
 function render() {
-  renderPlaylistButtons();
+  try {
+    renderPlaylistButtons();
 
-  const container = $("tracks");
-  container.replaceChildren();
+    const container = $("tracks");
+    container.replaceChildren();
 
-  const query = $("search").value.trim().toLowerCase();
-  const filter = $("playlistFilter").value;
+    const query = $("search").value.trim().toLowerCase();
+    const filter = $("playlistFilter").value;
 
-  let shown = tracks.filter(track =>
-    String(track.name || "").toLowerCase().includes(query)
-  );
+    let shown = tracks.filter(track =>
+      String(track.name || "").toLowerCase().includes(query)
+    );
 
-  if (filter === "favorites") {
-    shown = shown.filter(track => track.favorite);
-  }
-
-  if (activePlaylist !== "all") {
-    const playlist = playlists.find(p => p.id === activePlaylist);
-
-    if (playlist) {
-      shown = shown.filter(track =>
-        playlist.trackIds.includes(track.id)
-      );
-    } else {
-      activePlaylist = "all";
+    if (filter === "favorites") {
+      shown = shown.filter(track => track.favorite);
     }
-  }
 
-  if (shown.length === 0) {
-    container.textContent = "Geen recitaties gevonden. Voeg hierboven een recitatie toe.";
-    return;
-  }
+    if (activePlaylist !== "all") {
+      const playlist = playlists.find(p => p.id === activePlaylist);
 
-  shown.forEach(track => {
-    const item = document.createElement("div");
-    item.className = "track";
-
-    const title = document.createElement("strong");
-    title.textContent = track.name;
-    item.appendChild(title);
-
-    const audio = document.createElement("audio");
-    audio.controls = true;
-    audio.preload = "none";
-    audio.src = track.url;
-    item.appendChild(audio);
-
-    const error = document.createElement("small");
-    audio.addEventListener("error", () => {
-      error.textContent = "Audio kon niet worden geladen. Controleer de link.";
-    });
-    item.appendChild(error);
-
-    item.appendChild(createButton(
-      track.favorite ? "♥ Favoriet" : "♡ Favoriet",
-      "secondary",
-      async () => {
-        track.favorite = !track.favorite;
-        if (await saveData()) render();
+      if (playlist) {
+        shown = shown.filter(track =>
+          playlist.trackIds.includes(track.id)
+        );
+      } else {
+        activePlaylist = "all";
+        $("playlistFilter").value = "all";
       }
-    ));
+    }
 
-    if (playlists.length > 0) {
-      const selector = document.createElement("select");
-      selector.setAttribute("aria-label", "Kies afspeellijst");
+    if (shown.length === 0) {
+      container.textContent =
+        "Geen recitaties gevonden. Voeg hierboven een recitatie toe.";
+      return;
+    }
 
-      const placeholder = document.createElement("option");
-      placeholder.value = "";
-      placeholder.textContent = "Kies afspeellijst";
-      selector.appendChild(placeholder);
+    shown.forEach(track => {
+      const item = document.createElement("div");
+      item.className = "track";
 
-      playlists.forEach(playlist => {
-        const option = document.createElement("option");
-        option.value = playlist.id;
-        option.textContent = playlist.name;
-        selector.appendChild(option);
+      const title = document.createElement("strong");
+      title.textContent = track.name;
+      item.appendChild(title);
+
+      const audio = document.createElement("audio");
+      audio.controls = true;
+      audio.preload = "none";
+
+      if (track.url) audio.src = track.url;
+      item.appendChild(audio);
+
+      const error = document.createElement("small");
+      audio.addEventListener("error", () => {
+        error.textContent =
+          "Audio kon niet worden geladen. Controleer de link.";
       });
-
-      item.appendChild(selector);
+      item.appendChild(error);
 
       item.appendChild(createButton(
-        "Toevoegen aan afspeellijst",
+        track.favorite ? "♥ Favoriet" : "♡ Favoriet",
         "secondary",
         async () => {
-          const playlist = playlists.find(p => p.id === selector.value);
-
-          if (!playlist) {
-            alert("Kies eerst een afspeellijst.");
-            return;
-          }
-
-          if (playlist.trackIds.includes(track.id)) {
-            alert("Deze recitatie staat al in de afspeellijst.");
-            return;
-          }
-
-          playlist.trackIds.push(track.id);
+          track.favorite = !track.favorite;
           if (await saveData()) render();
         }
       ));
-    }
 
-    item.appendChild(createButton(
-      "Verwijderen",
-      "danger",
-      async () => {
-        if (!confirm("Deze recitatie voor iedereen verwijderen?")) return;
+      if (playlists.length > 0) {
+        const selector = document.createElement("select");
+        selector.setAttribute("aria-label", "Kies afspeellijst");
 
-        tracks = tracks.filter(t => t.id !== track.id);
+        const placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = "Kies afspeellijst";
+        selector.appendChild(placeholder);
 
         playlists.forEach(playlist => {
-          playlist.trackIds = playlist.trackIds.filter(
-            id => id !== track.id
-          );
+          const option = document.createElement("option");
+          option.value = playlist.id;
+          option.textContent = playlist.name;
+          selector.appendChild(option);
         });
 
-        if (await saveData()) render();
-      }
-    ));
+        item.appendChild(selector);
 
-    container.appendChild(item);
-  });
+        item.appendChild(createButton(
+          "Toevoegen aan afspeellijst",
+          "secondary",
+          async () => {
+            const playlist = playlists.find(p => p.id === selector.value);
+
+            if (!playlist) {
+              alert("Kies eerst een afspeellijst.");
+              return;
+            }
+
+            if (playlist.trackIds.includes(track.id)) {
+              alert("Deze recitatie staat al in de afspeellijst.");
+              return;
+            }
+
+            playlist.trackIds.push(track.id);
+            if (await saveData()) render();
+          }
+        ));
+      }
+
+      item.appendChild(createButton(
+        "Verwijderen",
+        "danger",
+        async () => {
+          if (!confirm("Deze recitatie voor iedereen verwijderen?")) return;
+
+          tracks = tracks.filter(t => t.id !== track.id);
+
+          playlists.forEach(playlist => {
+            playlist.trackIds = playlist.trackIds.filter(
+              id => id !== track.id
+            );
+          });
+
+          if (await saveData()) render();
+        }
+      ));
+
+      container.appendChild(item);
+    });
+  } catch (error) {
+    status("Fout bij het weergeven: " + error.message);
+  }
 }
 
 async function startApp() {
@@ -320,52 +358,58 @@ async function startApp() {
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
+    status("Aanmelden bij Firebase...");
+
     await signInAnonymously(auth);
 
     const database = getDatabase(app);
     libraryRef = ref(database, "library");
 
     onValue(libraryRef, async snapshot => {
-      const remote = snapshot.val();
+      try {
+        const remote = snapshot.val();
 
-      if (remote === null) {
-        if (!ready) {
-          const local = getLocalData();
-          tracks = local.tracks;
-          playlists = local.playlists;
-          ready = true;
+        if (remote === null) {
+          if (!ready) {
+            const local = getLocalData();
+            tracks = normalizeTracks(local.tracks);
+            playlists = normalizePlaylists(local.playlists);
+            ready = true;
 
-          if (tracks.length || playlists.length) {
-            await saveData();
-          } else {
-            status("Verbonden met Firebase. Voeg de eerste recitatie toe.");
+            if (tracks.length || playlists.length) {
+              await saveData();
+            } else {
+              status("Verbonden met Firebase. Voeg de eerste recitatie toe.");
+            }
+
+            render();
           }
-
-          render();
+          return;
         }
-        return;
+
+        const data = {
+          tracks: normalizeTracks(remote.tracks),
+          playlists: normalizePlaylists(remote.playlists)
+        };
+
+        const json = JSON.stringify(data);
+
+        if (json !== lastRemoteJson) {
+          tracks = data.tracks;
+          playlists = data.playlists;
+          lastRemoteJson = json;
+          saveLocalBackup();
+        }
+
+        ready = true;
+
+        status("Gesynchroniseerd: " + tracks.length +
+          " recitaties en " + playlists.length + " afspeellijsten.");
+
+        render();
+      } catch (error) {
+        status("Fout bij het verwerken van Firebase: " + error.message);
       }
-
-      const data = {
-        tracks: Array.isArray(remote.tracks) ? remote.tracks : [],
-        playlists: Array.isArray(remote.playlists) ? remote.playlists : []
-      };
-
-      const json = JSON.stringify(data);
-
-      if (json !== lastRemoteJson) {
-        tracks = data.tracks;
-        playlists = data.playlists;
-        lastRemoteJson = json;
-        saveLocalBackup();
-      }
-
-      ready = true;
-
-      status("Gesynchroniseerd: " + tracks.length +
-        " recitaties en " + playlists.length + " afspeellijsten.");
-
-      render();
     }, error => {
       status("Database lezen mislukt: " + error.message);
     });
